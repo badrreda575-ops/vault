@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Vault Premium
+Comment=Secure Local Password Manager
+Exec=/home/badr-reda/.gemini/antigravity/scratch/vault/run-vault.sh
+Icon=/home/badr-reda/.gemini/antigravity/scratch/vault/public/vite.svg
+Terminal=false
+Type=Application
+Categories=Utility;Security;
+Keywords=password;vault;secure;
