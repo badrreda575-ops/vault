@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Lock, Shield, Plus, Search, Key, LogOut, Copy, Eye, EyeOff, Save, Trash2, ShieldCheck, RefreshCw, AlertCircle } from 'lucide-react';
+import { Lock, Shield, Plus, Search, ScanSearch, Key, LogOut, LockKeyhole, Fingerprint, Settings2, Copy, Eye, EyeOff, Save, Trash2, ShieldCheck, RefreshCw, AlertCircle } from 'lucide-react';
 import { encryptData, decryptData, hashMasterPassword } from './utils/crypto';
 import { saveVault, loadVault, clearVault } from './utils/storage';
 import './index.css';
@@ -13,6 +13,10 @@ const App = () => {
   const [showPassword, setShowPassword] = useState({});
   const [newAccount, setNewAccount] = useState({ title: '', username: '', password: '', category: 'General' });
   const [error, setError] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+  const [passChangeData, setPassChangeData] = useState({ old: '', new: '', confirm: '' });
+  const [success, setSuccess] = useState('');
 
   // Load from local storage on mount
   useEffect(() => {
@@ -108,6 +112,32 @@ const App = () => {
     return 'bg-green-500';
   };
 
+  const handleChangeMasterPassword = () => {
+    if (passChangeData.old !== masterPassword) {
+      setError("Current master password incorrect");
+      return;
+    }
+    if (passChangeData.new.length < 8) {
+      setError("New password must be at least 8 characters");
+      return;
+    }
+    if (passChangeData.new !== passChangeData.confirm) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    // Re-encrypt everything
+    const encrypted = encryptData(accounts, passChangeData.new);
+    const hash = hashMasterPassword(passChangeData.new);
+    saveVault(encrypted, hash);
+    
+    setMasterPassword(passChangeData.new);
+    setIsChangingPassword(false);
+    setPassChangeData({ old: '', new: '', confirm: '' });
+    setSuccess("Master password updated successfully!");
+    setTimeout(() => setSuccess(''), 3000);
+  };
+
   const getStrengthLabel = (strength) => {
     if (strength === 0) return 'Very Weak';
     if (strength === 1) return 'Weak';
@@ -168,7 +198,7 @@ const App = () => {
   }
 
   return (
-    <div className="min-h-screen p-8 md:p-12 lg:p-20">
+    <div className="min-h-screen p-8 md:p-12 lg:p-20 relative">
       <div className="max-w-6xl mx-auto space-y-20">
         {/* Header */}
         <header className="flex flex-col items-center gap-16 mb-24">
@@ -181,43 +211,107 @@ const App = () => {
               <p className="text-base text-cyan-500/60 font-black uppercase tracking-[0.5em]">Secure Terminal • {accounts.length} Nodes Active</p>
             </div>
           </div>
+
+          {/* Corner Search */}
+          <div className={`search-wrapper-corner ${isSearchExpanded ? 'expanded' : ''}`}>
+            <button 
+              onClick={() => setIsSearchExpanded(!isSearchExpanded)}
+              className="utility-btn group"
+              title="Search Vault"
+            >
+              <ScanSearch className={`w-5 h-5 ${isSearchExpanded ? 'text-cyan-400' : 'text-slate-500'} group-hover:text-cyan-400 transition-all`} />
+            </button>
+            {isSearchExpanded && (
+              <input 
+                autoFocus
+                type="text" 
+                placeholder="Search..." 
+                className="search-input-corner animate-fade-left"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onBlur={() => searchQuery === '' && setIsSearchExpanded(false)}
+              />
+            )}
+          </div>
           
           <div className="w-full flex flex-col items-center gap-12">
-            <div className="search-container">
-              <div className="search-wrapper">
-                <input 
-                  type="text" 
-                  placeholder="Search Nodes..." 
-                  className="search-input-antigravity"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <Search className="search-icon-antigravity w-6 h-6" />
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4 animate-fade" style={{ animationDelay: '0.2s' }}>
-              <button onClick={() => setIsAdding(true)} className="btn-primary py-4 px-10 shadow-purple-500/20 shadow-2xl text-xs uppercase tracking-widest font-bold">
-                <Plus className="w-4 h-4" />
+            <div className="flex items-center gap-6 animate-fade" style={{ animationDelay: '0.2s' }}>
+              <button onClick={() => setIsAdding(true)} className="btn-primary py-4 px-10 shadow-cyan-500/20 shadow-2xl text-xs uppercase tracking-widest font-bold group">
+                <Fingerprint className="w-4 h-4 group-hover:rotate-12 transition-transform" />
                 New Account
               </button>
+
+              <button 
+                onClick={() => setIsChangingPassword(true)}
+                className="utility-btn group"
+                title="Change Master Password"
+              >
+                <Settings2 className="w-4 h-4 text-slate-500 group-hover:text-cyan-400" />
+              </button>
+
               <button 
                 onClick={() => {
                   setIsLocked(true);
                   setMasterPassword('');
                   setAccounts([]);
                 }} 
-                className="p-4 rounded-2xl bg-slate-900 hover:bg-slate-800 transition-all border border-white/5 group"
+                className="utility-btn group"
                 title="Lock Vault"
               >
-                <LogOut className="w-4 h-4 text-slate-500 group-hover:text-white" />
+                <LockKeyhole className="w-4 h-4 text-slate-500 group-hover:text-white" />
               </button>
             </div>
           </div>
         </header>
 
+        {success && (
+          <div className="max-w-md mx-auto mb-8 p-4 bg-green-500/10 border border-green-500/20 rounded-2xl text-green-400 text-sm animate-fade flex items-center justify-center gap-2">
+            <ShieldCheck className="w-4 h-4" />
+            {success}
+          </div>
+        )}
+
         {/* Main Content */}
-        {isAdding ? (
+        {isChangingPassword ? (
+          <div className="glass-panel p-8 animate-fade max-w-md mx-auto relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-50"></div>
+            <h2 className="text-2xl font-bold mb-6 text-center">Change Security Key</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Current Password</label>
+                <input 
+                  type="password" 
+                  className="input-field"
+                  value={passChangeData.old}
+                  onChange={(e) => setPassChangeData({...passChangeData, old: e.target.value})}
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">New Password</label>
+                <input 
+                  type="password" 
+                  className="input-field"
+                  value={passChangeData.new}
+                  onChange={(e) => setPassChangeData({...passChangeData, new: e.target.value})}
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Confirm New Password</label>
+                <input 
+                  type="password" 
+                  className="input-field"
+                  value={passChangeData.confirm}
+                  onChange={(e) => setPassChangeData({...passChangeData, confirm: e.target.value})}
+                />
+              </div>
+              {error && <p className="text-red-400 text-xs text-center">{error}</p>}
+              <div className="flex gap-4 pt-4">
+                <button onClick={() => setIsChangingPassword(false)} className="px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all flex-1 text-sm font-bold uppercase tracking-widest text-slate-400">Cancel</button>
+                <button onClick={handleChangeMasterPassword} className="btn-primary flex-1 justify-center text-sm font-bold uppercase tracking-widest shadow-cyan-500/20 shadow-xl">Update</button>
+              </div>
+            </div>
+          </div>
+        ) : isAdding ? (
           <div className="glass-panel p-8 animate-fade max-w-2xl mx-auto border-blue-500/20 relative">
             <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 blur-[100px] pointer-events-none"></div>
             
@@ -310,58 +404,43 @@ const App = () => {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+          <div className="cards-grid">
             {accounts.filter(a => a.title.toLowerCase().includes(searchQuery.toLowerCase()) || a.username.toLowerCase().includes(searchQuery.toLowerCase())).map(account => (
-              <div key={account.id} className="glass-panel p-6 space-y-6 hover:border-blue-500/40 transition-all group relative overflow-hidden flex flex-col justify-between border-white/[0.05]">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 blur-3xl -mr-16 -mt-16 pointer-events-none group-hover:bg-blue-500/10 transition-colors"></div>
+              <div key={account.id} className="glass-panel account-card hover:border-blue-500/40 transition-all group relative overflow-hidden border-white/[0.05]">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 blur-2xl -mr-12 -mt-12 pointer-events-none group-hover:bg-blue-500/10 transition-colors"></div>
                 
-                <div className="space-y-4 relative z-10">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-[20px] bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center text-blue-400 font-bold text-2xl border border-blue-500/20 shadow-inner group-hover:scale-105 transition-transform">
-                        {account.title[0].toUpperCase()}
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-xl leading-tight tracking-tight group-hover:text-blue-400 transition-colors">{account.title}</h3>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">{account.username}</p>
-                      </div>
+                <div className="space-y-2 relative z-10 w-full text-center">
+                  <div className="flex flex-col items-center">
+                    <div className="card-icon w-12 h-12 rounded-[16px] bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center text-blue-400 font-bold text-xl border border-blue-500/20 shadow-inner group-hover:scale-105 transition-transform">
+                      {account.title[0].toUpperCase()}
                     </div>
-                    <button 
-                      onClick={() => handleDeleteAccount(account.id)} 
-                      className="opacity-0 group-hover:opacity-100 p-2.5 text-slate-500 hover:text-red-400 transition-all hover:bg-red-400/10 rounded-xl"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <h3 className="card-title font-bold text-lg leading-tight tracking-tight group-hover:text-blue-400 transition-colors">{account.title}</h3>
+                    <p className="card-username text-[8px] text-slate-500 font-bold uppercase tracking-widest">{account.username}</p>
                   </div>
                   
-                  <div className="bg-black/40 border border-white/5 rounded-2xl p-4 flex items-center justify-between group/field">
-                    <span className="text-sm font-mono text-slate-300 tracking-[0.25em] pl-1 overflow-hidden whitespace-nowrap text-ellipsis mr-2">
-                      {showPassword[account.id] ? account.password : '••••••••••••'}
+                  <div className="password-field bg-black/40 border border-white/5 rounded-xl p-2 flex items-center justify-between group/field mt-2">
+                    <span className="password-text font-mono text-slate-300 tracking-[0.1em] overflow-hidden whitespace-nowrap text-ellipsis mr-1">
+                      {showPassword[account.id] ? account.password : '••••••'}
                     </span>
-                    <div className="flex gap-1.5">
+                    <div className="flex gap-1">
                       <button 
                         onClick={() => togglePasswordVisibility(account.id)}
-                        className="p-2 hover:bg-white/5 rounded-lg text-slate-500 hover:text-slate-300 transition-colors"
+                        className="p-1 hover:bg-white/5 rounded-lg text-slate-500 hover:text-slate-300 transition-colors"
                       >
-                        {showPassword[account.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                      <button 
-                        onClick={() => {
-                          navigator.clipboard.writeText(account.password);
-                        }} 
-                        className="p-2 hover:bg-white/5 rounded-lg text-slate-500 hover:text-blue-400 transition-colors active:scale-90"
-                      >
-                        <Copy className="w-4 h-4" />
+                        {showPassword[account.id] ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                       </button>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 mt-4 pt-4 border-t border-white/5 relative z-10">
-                   <div className={`w-1.5 h-1.5 rounded-full ${getStrengthColor(getPasswordStrength(account.password))}`}></div>
-                   <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest leading-none">
-                     {getStrengthLabel(getPasswordStrength(account.password))} Security
-                   </span>
+                <div className="flex items-center justify-center gap-2 mt-2 pt-2 border-t border-white/5 relative z-10 w-full">
+                    <div className={`w-1.5 h-1.5 rounded-full ${getStrengthColor(getPasswordStrength(account.password))}`}></div>
+                    <button 
+                      onClick={() => handleDeleteAccount(account.id)} 
+                      className="absolute right-2 bottom-2 p-2.5 text-slate-500 hover:text-red-400 transition-all opacity-0 group-hover:opacity-100 bg-red-400/5 hover:bg-red-400/10 rounded-xl"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                 </div>
               </div>
             ))}
