@@ -84,65 +84,88 @@ body {
   background: rgba(255, 255, 255, 0.08);
 }
 
-/* Antigravity Search Styles */
-.search-container {
+/* Corner Search Styles */
+.search-wrapper-corner {
+  position: absolute;
+  top: 3rem;
+  right: 3rem;
   display: flex;
-  justify-content: center;
-  width: 100%;
-  margin-top: 2rem;
-  perspective: 1000px;
+  align-items: center;
+  gap: 1rem;
+  z-index: 1000;
+  transition: var(--transition);
 }
 
-.search-wrapper {
-  position: relative;
-  width: 100%;
-  max-width: 600px; /* Increased initial size */
-  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-  transform-style: preserve-3d;
-}
-
-.search-wrapper:focus-within {
-  max-width: 800px; /* Even wider on focus */
-  transform: translateZ(30px);
-}
-
-.search-input-antigravity {
-  width: 100%;
-  background: rgba(0, 0, 0, 0.6);
+.search-input-corner {
+  background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(25px);
   -webkit-backdrop-filter: blur(25px);
-  border: 2px solid rgba(6, 182, 212, 0.3); /* Stronger border */
+  border: 1px solid var(--accent-primary);
   border-radius: 100px;
-  padding: 1.5rem 4rem;
+  padding: 1rem 2rem;
   color: white;
-  font-size: 1.25rem;
-  text-align: center;
-  transition: all 0.5s ease;
-  box-shadow: 0 0 30px rgba(6, 182, 212, 0.1);
-}
-
-.search-input-antigravity:focus {
+  font-size: 1.1rem;
+  width: 250px;
   outline: none;
-  background: rgba(0, 0, 0, 0.8);
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 60px rgba(6, 182, 212, 0.4), inset 0 0 20px rgba(6, 182, 212, 0.2);
+  box-shadow: 0 0 30px rgba(6, 182, 212, 0.2);
 }
 
-.search-icon-antigravity {
-  position: absolute;
-  right: 2rem; /* Move to right like the reference */
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--accent-primary);
-  transition: all 0.3s ease;
+@keyframes fadeLeft {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
-.search-wrapper:focus-within .search-icon-antigravity {
-  color: var(--accent-primary);
-  transform: translateY(-50%) scale(1.2);
+.animate-fade-left {
+  animation: fadeLeft 0.4s ease forwards;
 }
 
-/* Animations */
+/* Account Cards Grid Optimization */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+  justify-items: center;
+}
+
+.account-card {
+  aspect-ratio: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.5rem !important;
+  width: 100%; /* Fill the grid cell */
+  max-width: 240px;
+}
+
+.account-card .card-icon {
+  width: 3.5rem !important;
+  height: 3.5rem !important;
+  font-size: 1.5rem !important;
+  border-radius: 18px !important;
+}
+
+.account-card .card-title {
+  font-size: 1.25rem !important; /* Increased from 1rem */
+  margin-top: 0.75rem;
+  font-weight: 700;
+}
+
+.account-card .card-username {
+  font-size: 10px !important; /* Increased from 8px */
+}
+
+.account-card .password-field {
+  padding: 0.75rem 1rem !important; /* Increased padding */
+  border-radius: 12px !important;
+  margin-top: 0.75rem;
+}
+
+.account-card .password-text {
+  font-size: 0.9rem !important; /* Increased from text-xs */
+}
+
+/* Base Styles */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -150,5 +173,40 @@ body {
 
 .animate-fade {
   animation: fadeIn 0.5s ease forwards;
+}
+
+/* Modern Utility Buttons */
+.utility-btn {
+  padding: 1rem;
+  border-radius: 1.25rem;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.utility-btn:hover {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(6, 182, 212, 0.4);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
+}
+
+.utility-btn:active {
+  transform: scale(0.95);
+}
+
+.utility-btn svg {
+  transition: all 0.3s ease;
+}
+
+.utility-btn:hover svg {
+  filter: drop-shadow(0 0 5px currentColor);
 }
 
